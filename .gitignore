@@ -13,6 +13,8 @@ client_secret*.json
 credentials*.json
 token*.json
 google_tokens/
+UserData/
+[Uu]ser[Dd]ata/
 
 *.session
 *.session-journal

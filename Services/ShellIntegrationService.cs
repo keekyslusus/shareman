@@ -5,7 +5,8 @@ namespace GDriveTelegramSender.Services;
 
 public static class ShellIntegrationService
 {
-    private const string ShortcutFileName = "Google Drive & Telegram.lnk";
+    private const string ShortcutFileName = "shareman.lnk";
+    private const string LegacyShortcutFileName = "Google Drive & Telegram.lnk";
 
     public static string GetSendToDirectory()
     {
@@ -15,6 +16,11 @@ public static class ShellIntegrationService
     public static string GetShortcutPath()
     {
         return Path.Combine(GetSendToDirectory(), ShortcutFileName);
+    }
+
+    private static string GetLegacyShortcutPath()
+    {
+        return Path.Combine(GetSendToDirectory(), LegacyShortcutFileName);
     }
 
     public static bool IsShortcutInstalled()
@@ -39,6 +45,13 @@ public static class ShellIntegrationService
                 Directory.CreateDirectory(sendToDir);
             }
 
+            // Remove legacy shortcut if it exists
+            string legacyShortcutPath = GetLegacyShortcutPath();
+            if (File.Exists(legacyShortcutPath))
+            {
+                try { File.Delete(legacyShortcutPath); } catch { }
+            }
+
             string shortcutPath = GetShortcutPath();
 
             Type? shellType = Type.GetTypeFromProgID("WScript.Shell");
@@ -56,7 +69,7 @@ public static class ShellIntegrationService
             dynamic shortcut = shell.CreateShortcut(shortcutPath);
             shortcut.TargetPath = exePath;
             shortcut.WorkingDirectory = Path.GetDirectoryName(exePath);
-            shortcut.Description = "Загрузить видео на Google Drive и отправить ссылку в Telegram";
+            shortcut.Description = Loc.Get("SendTo_Shortcut_Description");
             shortcut.Save();
 
             return true;
@@ -77,6 +90,13 @@ public static class ShellIntegrationService
             {
                 File.Delete(shortcutPath);
             }
+
+            string legacyShortcutPath = GetLegacyShortcutPath();
+            if (File.Exists(legacyShortcutPath))
+            {
+                try { File.Delete(legacyShortcutPath); } catch { }
+            }
+
             return true;
         }
         catch (Exception ex)

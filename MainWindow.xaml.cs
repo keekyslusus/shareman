@@ -45,9 +45,15 @@ public partial class MainWindow : Window
 
         ThemeManager.Initialize(this);
 
+        LanguageComboBox.ItemsSource = LocalizationService.SupportedLanguages;
+        LanguageComboBox.SelectedValue = LocalizationService.Instance.ConfiguredLanguage;
+        UpdateLanguageVisibility();
+        LocalizationService.Instance.LanguageChanged += OnLanguageChanged;
+
         Loaded += MainWindow_Loaded;
         Closed += (_, _) =>
         {
+            LocalizationService.Instance.LanguageChanged -= OnLanguageChanged;
             _viewTransition?.Dispose();
             _settingsScrollController?.Dispose();
             _settingsScrollMotion?.Dispose();
@@ -96,27 +102,73 @@ public partial class MainWindow : Window
         }
     }
 
+    private void OnLanguageChanged()
+    {
+        if (SendView.Visibility == Visibility.Visible)
+        {
+            ToggleSettingsText.Text = Loc.Get("Common_Settings");
+        }
+        else
+        {
+            ToggleSettingsText.Text = Loc.Get("Common_BackToSend");
+        }
+
+        if (!string.IsNullOrEmpty(_selectedFilePath) && File.Exists(_selectedFilePath))
+        {
+            var fi = new FileInfo(_selectedFilePath);
+            FileSizeText.Text = Loc.Format("Send_FileSize_Format", FormatBytes(fi.Length));
+            ChangeFileBtnText.Text = Loc.Get("Common_Change");
+        }
+        else
+        {
+            ChangeFileBtnText.Text = Loc.Get("Common_Choose");
+        }
+
+        UpdateSendToStatus();
+        _ = UpdateAuthBadgesAsync();
+
+        UpdateLanguageVisibility();
+        LanguageComboBox.Items.Refresh();
+    }
+
+    private void UpdateLanguageVisibility()
+    {
+        LanguageRow.Visibility = LocalizationService.Instance.HasMultipleLanguages
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+    }
+
+    private void LanguageComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (LanguageComboBox.SelectedValue is string lang && lang != LocalizationService.Instance.ConfiguredLanguage)
+        {
+            LocalizationService.Instance.SetLanguage(lang);
+            _settingsService.Settings.Language = lang;
+            _settingsService.SaveSettings();
+        }
+    }
+
     #region View Switching & Settings Loading
 
     private void ShowSendView()
     {
         _viewTransition?.Show(SendView);
         ToggleSettingsIcon.Data = AppIcons.SettingsOutlined;
-        ToggleSettingsText.Text = "Настройки";
+        ToggleSettingsText.Text = Loc.Get("Common_Settings");
     }
 
     private void ShowSettingsView()
     {
         _viewTransition?.Show(SettingsView);
         ToggleSettingsIcon.Data = AppIcons.ArrowBackOutlined;
-        ToggleSettingsText.Text = "К отправке";
+        ToggleSettingsText.Text = Loc.Get("Common_BackToSend");
     }
 
     private void ToggleSettingsBtn_Click(object sender, RoutedEventArgs e)
     {
         if (_isUploading)
         {
-            MessageBox.Show("Дождитесь завершения загрузки файла.", "Загрузка выполняется", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(Loc.Get("Msg_UploadInProgress_Body"), Loc.Get("Msg_UploadInProgress_Title"), MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
 
@@ -127,6 +179,10 @@ public partial class MainWindow : Window
         else
         {
             ShowSendView();
+            if (_telegramService.IsConfigured && _telegramService.HasSessionFile && _allChats.Count == 0)
+            {
+                _ = LoadContactsAsync();
+            }
         }
     }
 
@@ -140,6 +196,8 @@ public partial class MainWindow : Window
         GoogleClientIdBox.Text = s.GoogleClientId ?? "";
         GoogleClientSecretBox.Text = s.GoogleClientSecret ?? "";
 
+        UpdateLanguageVisibility();
+        LanguageComboBox.SelectedValue = !string.IsNullOrEmpty(s.Language) ? s.Language : LocalizationService.SystemLanguageCode;
         AutoCloseCheckBox.IsChecked = s.AutoCloseOnSuccess;
     }
 
@@ -155,6 +213,11 @@ public partial class MainWindow : Window
 
         s.GoogleClientId = GoogleClientIdBox.Text.Trim();
         s.GoogleClientSecret = GoogleClientSecretBox.Text.Trim();
+
+        if (LanguageComboBox.SelectedValue is string lang)
+        {
+            s.Language = lang;
+        }
 
         s.AutoCloseOnSuccess = AutoCloseCheckBox.IsChecked ?? true;
 
@@ -182,7 +245,7 @@ public partial class MainWindow : Window
             }
             else
             {
-                TgStatusBadge.Text = "Не подключен";
+                TgStatusBadge.Text = Loc.Get("Status_NotConnected");
                 TgStatusBadge.Foreground = (Brush)FindResource("SettingsMuted");
                 TgStatusDot.Fill = (Brush)FindResource("SettingsMuted");
                 TgLoginBtn.Visibility = Visibility.Visible;
@@ -191,7 +254,7 @@ public partial class MainWindow : Window
         }
         catch
         {
-            TgStatusBadge.Text = "Не подключен";
+            TgStatusBadge.Text = Loc.Get("Status_NotConnected");
             TgStatusBadge.Foreground = (Brush)FindResource("SettingsMuted");
             TgStatusDot.Fill = (Brush)FindResource("SettingsMuted");
             TgLoginBtn.Visibility = Visibility.Visible;
@@ -204,7 +267,8 @@ public partial class MainWindow : Window
             bool gdriveAuth = await _driveService.IsAuthorizedAsync();
             if (gdriveAuth)
             {
-                GoogleStatusBadge.Text = "Авторизован";
+                string? email = await _driveService.GetUserEmailAsync();
+                GoogleStatusBadge.Text = !string.IsNullOrWhiteSpace(email) ? email : Loc.Get("Status_Authorized");
                 GoogleStatusBadge.Foreground = (Brush)FindResource("SettingsAccent");
                 GoogleStatusDot.Fill = (Brush)FindResource("SettingsAccent");
                 GoogleAuthBtn.Visibility = Visibility.Collapsed;
@@ -212,7 +276,7 @@ public partial class MainWindow : Window
             }
             else
             {
-                GoogleStatusBadge.Text = _driveService.IsConfigured ? "Требуется вход" : "Не настроен";
+                GoogleStatusBadge.Text = _driveService.IsConfigured ? Loc.Get("Status_LoginRequired") : Loc.Get("Status_NotConfigured");
                 GoogleStatusBadge.Foreground = _driveService.IsConfigured
                     ? (Brush)FindResource("SettingsWarning")
                     : (Brush)FindResource("SettingsMuted");
@@ -225,7 +289,7 @@ public partial class MainWindow : Window
         }
         catch
         {
-            GoogleStatusBadge.Text = "Не настроен";
+            GoogleStatusBadge.Text = Loc.Get("Status_NotConfigured");
             GoogleStatusBadge.Foreground = (Brush)FindResource("SettingsMuted");
             GoogleStatusDot.Fill = (Brush)FindResource("SettingsMuted");
             GoogleAuthBtn.Visibility = Visibility.Visible;
@@ -238,7 +302,7 @@ public partial class MainWindow : Window
         bool installed = ShellIntegrationService.IsShortcutInstalled();
         if (installed)
         {
-            SendToStatusBadge.Text = "Добавлено";
+            SendToStatusBadge.Text = Loc.Get("Status_Added");
             SendToStatusBadge.Foreground = (Brush)FindResource("SettingsAccent");
             SendToStatusDot.Fill = (Brush)FindResource("SettingsAccent");
             AddSendToBtn.Visibility = Visibility.Collapsed;
@@ -246,7 +310,7 @@ public partial class MainWindow : Window
         }
         else
         {
-            SendToStatusBadge.Text = "Не добавлено";
+            SendToStatusBadge.Text = Loc.Get("Status_NotAdded");
             SendToStatusBadge.Foreground = (Brush)FindResource("SettingsMuted");
             SendToStatusDot.Fill = (Brush)FindResource("SettingsMuted");
             AddSendToBtn.Visibility = Visibility.Visible;
@@ -263,16 +327,16 @@ public partial class MainWindow : Window
         _selectedFilePath = path;
         var fi = new FileInfo(path);
         FileNameText.Text = fi.Name;
-        FileSizeText.Text = $"Размер: {FormatBytes(fi.Length)}";
-        ChangeFileBtnText.Text = "Сменить";
+        FileSizeText.Text = Loc.Format("Send_FileSize_Format", FormatBytes(fi.Length));
+        ChangeFileBtnText.Text = Loc.Get("Common_Change");
     }
 
     private void ChangeFileBtn_Click(object sender, RoutedEventArgs e)
     {
         var dialog = new OpenFileDialog
         {
-            Title = "Выберите видео или файл для отправки",
-            Filter = "Все файлы (*.*)|*.*|Видео файлы (*.mp4;*.mov;*.mkv;*.avi)|*.mp4;*.mov;*.mkv;*.avi"
+            Title = Loc.Get("Dialog_SelectFile_Title"),
+            Filter = Loc.Get("Dialog_SelectFile_Filter")
         };
 
         if (dialog.ShowDialog() == true)
@@ -316,7 +380,7 @@ public partial class MainWindow : Window
     private StateCardTransitions.ExitHandle? _loadingExit;
     private bool _isLoadingContacts;
 
-    private void ShowContactsLoading(string status = "Загрузка контактов...")
+    private void ShowContactsLoading(string? status = null)
     {
         if (_isLoadingContacts) return;
         _isLoadingContacts = true;
@@ -325,7 +389,7 @@ public partial class MainWindow : Window
         _loadingExit = null;
 
         SearchBox.IsEnabled = false;
-        ContactsLoadingStatus.Text = status;
+        ContactsLoadingStatus.Text = status ?? Loc.Get("Send_LoadingContacts");
         ContactsLoadingOverlay.Visibility = Visibility.Visible;
 
         bool animated = UiAnimationPolicy.Enabled;
@@ -380,7 +444,7 @@ public partial class MainWindow : Window
     {
         if (!_telegramService.IsConfigured || !_telegramService.HasSessionFile)
         {
-            ContactsStatusText.Text = "Telegram не подключен. Настройте аккаунт в настройках.";
+            ContactsStatusText.Text = Loc.Get("Send_TgNotConnectedHint");
             ContactsStatusText.Visibility = Visibility.Visible;
             ContactsListBox.Visibility = Visibility.Collapsed;
             _allChats.Clear();
@@ -388,7 +452,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        ShowContactsLoading("Загрузка контактов...");
+        ShowContactsLoading(Loc.Get("Send_LoadingContacts"));
         var minTimeTask = Task.Delay(400);
 
         try
@@ -404,7 +468,7 @@ public partial class MainWindow : Window
 
             if (_filteredChats.Count == 0)
             {
-                ContactsStatusText.Text = "Контакты не найдены";
+                ContactsStatusText.Text = Loc.Get("Send_NoContactsFound");
                 ContactsStatusText.Visibility = Visibility.Visible;
                 ContactsListBox.Visibility = Visibility.Collapsed;
             }
@@ -422,7 +486,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            ContactsStatusText.Text = $"Ошибка загрузки: {ex.Message}";
+            ContactsStatusText.Text = Loc.Format("Send_ContactsLoadError", ex.Message);
             ContactsStatusText.Visibility = Visibility.Visible;
             ContactsListBox.Visibility = Visibility.Collapsed;
         }
@@ -514,21 +578,21 @@ public partial class MainWindow : Window
     {
         if (string.IsNullOrEmpty(_selectedFilePath) || !File.Exists(_selectedFilePath))
         {
-            MessageBox.Show("Пожалуйста, выберите файл для отправки.", "Файл не выбран", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(Loc.Get("Msg_NoFileSelected_Body"), Loc.Get("Msg_NoFileSelected_Title"), MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
         var selectedRecipient = ContactsListBox.SelectedItem as TelegramChatItem;
         if (selectedRecipient == null)
         {
-            MessageBox.Show("Пожалуйста, выберите контакт или чат в списке.", "Получатель не выбран", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(Loc.Get("Msg_NoRecipientSelected_Body"), Loc.Get("Msg_NoRecipientSelected_Title"), MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
         // Check Google Drive auth
         if (!_driveService.IsConfigured)
         {
-            MessageBox.Show("Google Drive API не настроен. Перейдите в 'Настройки' для настройки Client ID.", "Настройка Google Drive", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(Loc.Get("Msg_GDriveNotConfigured_Body"), Loc.Get("Msg_GDriveNotConfigured_Title"), MessageBoxButton.OK, MessageBoxImage.Warning);
             ShowSettingsView();
             return;
         }
@@ -542,10 +606,10 @@ public partial class MainWindow : Window
         ProgressCard.Visibility = Visibility.Visible;
         UploadProgressBar.Value = 0;
         UploadProgressBar.IsIndeterminate = false;
-        ProgressStatusText.Text = "Подключение к Google Drive...";
+        ProgressStatusText.Text = Loc.Get("Send_Progress_ConnectingGDrive");
         ProgressStatusText.Foreground = (Brush)FindResource("SettingsAccent");
         ProgressPercentText.Text = "0%";
-        ProgressDetailsText.Text = "Подготовка к загрузке...";
+        ProgressDetailsText.Text = Loc.Get("Send_Progress_Preparing");
 
         try
         {
@@ -556,10 +620,10 @@ public partial class MainWindow : Window
 
                 string sentStr = FormatBytes(info.BytesSent);
                 string totalStr = FormatBytes(info.TotalBytes);
-                string speedStr = info.BytesPerSecond > 0 ? $" • {FormatBytes((long)info.BytesPerSecond)}/с" : "";
+                string speedStr = info.BytesPerSecond > 0 ? Loc.FormatSpeed((long)info.BytesPerSecond) : "";
 
-                ProgressDetailsText.Text = $"{sentStr} из {totalStr}{speedStr}";
-                ProgressStatusText.Text = "Загрузка в Google Drive...";
+                ProgressDetailsText.Text = Loc.Format("Send_Progress_DetailsFormat", sentStr, totalStr, speedStr);
+                ProgressStatusText.Text = Loc.Get("Send_Progress_UploadingGoogleDrive");
                 ProgressStatusText.Foreground = (Brush)FindResource("SettingsAccent");
             });
 
@@ -567,32 +631,23 @@ public partial class MainWindow : Window
             string publicLink = await _driveService.UploadAndShareAsync(_selectedFilePath, progress, _uploadCts.Token);
 
             // 2. Send via Telegram
-            ProgressStatusText.Text = "Отправка сообщения в Telegram...";
+            ProgressStatusText.Text = Loc.Get("Send_Progress_SendingTelegram");
             ProgressStatusText.Foreground = (Brush)FindResource("SettingsAccent");
             UploadProgressBar.IsIndeterminate = true;
 
             string fileName = Path.GetFileName(_selectedFilePath);
             string userComment = MessageTextBox.Text.Trim();
 
-            string messageToSend;
-            if (!string.IsNullOrEmpty(userComment))
-            {
-                messageToSend = $"{userComment}\n\n🎬 {fileName}\n🔗 {publicLink}";
-            }
-            else
-            {
-                messageToSend = $"🎬 {fileName}\n🔗 {publicLink}";
-            }
-
-            await _telegramService.SendMessageAsync(selectedRecipient.Peer, messageToSend);
+            var (messageToSend, entities) = TelegramClientService.FormatFileMessage(userComment, fileName, publicLink);
+            await _telegramService.SendMessageAsync(selectedRecipient.Peer, messageToSend, entities);
 
             // 3. Done!
             UploadProgressBar.IsIndeterminate = false;
             UploadProgressBar.Value = 100;
             ProgressPercentText.Text = "100%";
-            ProgressStatusText.Text = "Ссылка успешно отправлена!";
-            ProgressStatusText.Foreground = (Brush)FindResource("SettingsSuccess");
-            ProgressDetailsText.Text = $"Отправлено для: {selectedRecipient.Title}";
+            ProgressStatusText.Text = Loc.Get("Send_Progress_Success");
+            ProgressStatusText.Foreground = (Brush)FindResource("SettingsAccent");
+            ProgressDetailsText.Text = Loc.Format("Send_Progress_SentTo", selectedRecipient.Title);
 
             if (_settingsService.Settings.AutoCloseOnSuccess)
             {
@@ -602,15 +657,15 @@ public partial class MainWindow : Window
         }
         catch (OperationCanceledException)
         {
-            ProgressStatusText.Text = "Загрузка отменена.";
+            ProgressStatusText.Text = Loc.Get("Send_Progress_Canceled");
             ProgressStatusText.Foreground = (Brush)FindResource("SettingsWarning");
         }
         catch (Exception ex)
         {
-            ProgressStatusText.Text = "Ошибка отправки";
+            ProgressStatusText.Text = Loc.Get("Send_Progress_Error");
             ProgressStatusText.Foreground = (Brush)FindResource("SettingsError");
             ProgressDetailsText.Text = ex.Message;
-            MessageBox.Show($"Произошла ошибка:\n{ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(Loc.Format("Msg_ErrorOccurred_Body", ex.Message), Loc.Get("Common_Error"), MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
         {
@@ -625,7 +680,7 @@ public partial class MainWindow : Window
     {
         if (_isUploading)
         {
-            var result = MessageBox.Show("Загрузка еще не завершена. Вы уверены, что хотите прервать?", "Прерывание", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            var result = MessageBox.Show(Loc.Get("Msg_ConfirmAbort_Body"), Loc.Get("Msg_ConfirmAbort_Title"), MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (result == MessageBoxResult.Yes)
             {
                 _uploadCts?.Cancel();
@@ -648,14 +703,14 @@ public partial class MainWindow : Window
 
         if (_settingsService.Settings.TelegramApiId <= 0 || string.IsNullOrWhiteSpace(_settingsService.Settings.TelegramApiHash))
         {
-            MessageBox.Show("Заполните API ID и API Hash перед входом в Telegram.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(Loc.Get("Msg_FillTgApiCredentials_Body"), Loc.Get("Common_Error"), MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
         try
         {
             TgLoginBtn.IsEnabled = false;
-            TgStatusBadge.Text = "Вход...";
+            TgStatusBadge.Text = Loc.Get("Status_LoggingIn");
             TgStatusBadge.Foreground = (Brush)FindResource("SettingsWarning");
             TgStatusDot.Fill = (Brush)FindResource("SettingsWarning");
 
@@ -665,7 +720,7 @@ public partial class MainWindow : Window
                 {
                     if (promptType == "verification_code")
                     {
-                        var dlg = new PromptDialog("Код подтверждения", "Введите проверочный код, отправленный в Telegram:")
+                        var dlg = new PromptDialog(Loc.Get("Prompt_VerificationCode_Title"), Loc.Get("Prompt_VerificationCode_Body"))
                         {
                             Owner = this
                         };
@@ -673,7 +728,7 @@ public partial class MainWindow : Window
                     }
                     if (promptType == "password")
                     {
-                        var dlg = new PromptDialog("Пароль 2FA", "Введите пароль двухфакторной аутентификации (2FA):", isPassword: true)
+                        var dlg = new PromptDialog(Loc.Get("Prompt_2FA_Title"), Loc.Get("Prompt_2FA_Body"), isPassword: true)
                         {
                             Owner = this
                         };
@@ -681,7 +736,7 @@ public partial class MainWindow : Window
                     }
                     if (promptType == "phone_number")
                     {
-                        var dlg = new PromptDialog("Номер телефона", "Введите номер телефона в международном формате (+7...):")
+                        var dlg = new PromptDialog(Loc.Get("Prompt_Phone_Title"), Loc.Get("Prompt_Phone_Body"))
                         {
                             Owner = this
                         };
@@ -694,7 +749,7 @@ public partial class MainWindow : Window
             if (user != null)
             {
                 await UpdateAuthBadgesAsync();
-                MessageBox.Show($"Успешная авторизация в Telegram: {user.first_name} {user.last_name}!", "Успешно", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show(Loc.Format("Msg_TgAuthSuccess_Body", user.first_name, user.last_name), Loc.Get("Common_Success"), MessageBoxButton.OK, MessageBoxImage.Information);
                 await LoadContactsAsync();
             }
             else
@@ -704,7 +759,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Ошибка входа в Telegram: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(Loc.Format("Msg_TgAuthError_Body", ex.Message), Loc.Get("Common_Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             await UpdateAuthBadgesAsync();
         }
         finally
@@ -715,14 +770,14 @@ public partial class MainWindow : Window
 
     private void TgLogoutBtn_Click(object sender, RoutedEventArgs e)
     {
-        var result = MessageBox.Show("Вы уверены, что хотите выйти из Telegram на этом компьютере?", "Выход", MessageBoxButton.YesNo, MessageBoxImage.Question);
+        var result = MessageBox.Show(Loc.Get("Msg_ConfirmTgLogout_Body"), Loc.Get("Msg_ConfirmTgLogout_Title"), MessageBoxButton.YesNo, MessageBoxImage.Question);
         if (result == MessageBoxResult.Yes)
         {
             _telegramService.Logout();
             _ = UpdateAuthBadgesAsync();
             _allChats.Clear();
             _filteredChats.Clear();
-            MessageBox.Show("Сессия Telegram удалена.", "Выход выполнен", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(Loc.Get("Msg_TgSessionDeleted_Body"), Loc.Get("Msg_TgSessionDeleted_Title"), MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
 
@@ -730,8 +785,8 @@ public partial class MainWindow : Window
     {
         var dialog = new OpenFileDialog
         {
-            Title = "Выберите client_secret.json от Google Cloud Console",
-            Filter = "JSON файлы (*.json)|*.json|Все файлы (*.*)|*.*"
+            Title = Loc.Get("Dialog_SelectJson_Title"),
+            Filter = Loc.Get("Dialog_SelectJson_Filter")
         };
 
         if (dialog.ShowDialog() == true)
@@ -760,18 +815,18 @@ public partial class MainWindow : Window
                     }
                     if (appElem.TryGetProperty("client_secret", out var cs))
                     {
-                        GoogleClientSecretBox.Text = cs.GetString();
+                        GoogleClientSecretBox.Text = cs.GetString() ?? string.Empty;
                     }
-                    MessageBox.Show("Ключи Google успешно загружены из файла!", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show(Loc.Get("Msg_GoogleKeysLoaded_Body"), Loc.Get("Common_Success"), MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 else
                 {
-                    MessageBox.Show("В файле JSON не найдены разделы 'installed' или 'web'. Проверьте тип учетных данных (должен быть Desktop App).", "Предупреждение", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show(Loc.Get("Msg_GoogleKeysFormatWarning_Body"), Loc.Get("Common_Warning"), MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Не удалось прочитать JSON файл: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(Loc.Format("Msg_ReadJsonError_Body", ex.Message), Loc.Get("Common_Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }
@@ -783,14 +838,14 @@ public partial class MainWindow : Window
         if (string.IsNullOrWhiteSpace(_settingsService.Settings.GoogleClientId) ||
             string.IsNullOrWhiteSpace(_settingsService.Settings.GoogleClientSecret))
         {
-            MessageBox.Show("Заполните Client ID и Client Secret (или загрузите client_secret.json).", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(Loc.Get("Msg_FillGoogleCredentials_Body"), Loc.Get("Common_Error"), MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
         try
         {
             GoogleAuthBtn.IsEnabled = false;
-            GoogleStatusBadge.Text = "Вход в браузере...";
+            GoogleStatusBadge.Text = Loc.Get("Status_BrowserLogin");
             GoogleStatusBadge.Foreground = (Brush)FindResource("SettingsWarning");
             GoogleStatusDot.Fill = (Brush)FindResource("SettingsWarning");
 
@@ -798,7 +853,7 @@ public partial class MainWindow : Window
             if (success)
             {
                 await UpdateAuthBadgesAsync();
-                MessageBox.Show("Успешная авторизация в Google Drive!", "Успешно", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show(Loc.Get("Msg_GoogleAuthSuccess_Body"), Loc.Get("Common_Success"), MessageBoxButton.OK, MessageBoxImage.Information);
             }
             else
             {
@@ -807,7 +862,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Ошибка авторизации в Google Drive: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(Loc.Format("Msg_GoogleAuthError_Body", ex.Message), Loc.Get("Common_Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             await UpdateAuthBadgesAsync();
         }
         finally
@@ -818,12 +873,12 @@ public partial class MainWindow : Window
 
     private void GoogleResetBtn_Click(object sender, RoutedEventArgs e)
     {
-        var res = MessageBox.Show("Сбросить сохраненный токен доступа к Google Drive?", "Сброс", MessageBoxButton.YesNo, MessageBoxImage.Question);
+        var res = MessageBox.Show(Loc.Get("Msg_ConfirmGoogleReset_Body"), Loc.Get("Msg_ConfirmGoogleReset_Title"), MessageBoxButton.YesNo, MessageBoxImage.Question);
         if (res == MessageBoxResult.Yes)
         {
             _driveService.ResetAuthorization();
             _ = UpdateAuthBadgesAsync();
-            MessageBox.Show("Авторизация Google Drive сброшена.", "Сброс", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(Loc.Get("Msg_GoogleResetDone_Body"), Loc.Get("Common_Success"), MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
 
@@ -833,11 +888,11 @@ public partial class MainWindow : Window
         if (ok)
         {
             UpdateSendToStatus();
-            MessageBox.Show("Пункт «Google Drive & Telegram» успешно добавлен в системное меню «Отправить»!\n\nТеперь вы можете нажать правой кнопкой мыши по любому файлу -> Отправить -> Google Drive & Telegram.", "Успешно", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(Loc.Get("Msg_SendToAdded_Body"), Loc.Get("Common_Success"), MessageBoxButton.OK, MessageBoxImage.Information);
         }
         else
         {
-            MessageBox.Show("Не удалось создать ярлык в папке SendTo.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(Loc.Get("Msg_SendToCreateError_Body"), Loc.Get("Common_Error"), MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -847,7 +902,103 @@ public partial class MainWindow : Window
         if (ok)
         {
             UpdateSendToStatus();
-            MessageBox.Show("Пункт удален из меню «Отправить».", "Успешно", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(Loc.Get("Msg_SendToRemoved_Body"), Loc.Get("Common_Success"), MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+    }
+
+    private async void CreateBackupBtn_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            SaveUiToSettings();
+
+            var dialog = new SaveFileDialog
+            {
+                Title = Loc.Get("Settings_Backup_CreateBtn"),
+                Filter = BackupService.DialogFilter,
+                DefaultExt = BackupService.BackupFileExtension,
+                FileName = $"shareman_Backup_{DateTime.Now:yyyy-MM-dd_HHmm}.gdtbak"
+            };
+
+            if (dialog.ShowDialog(this) == true)
+            {
+                // Temporarily release Telegram client session locks and flush pending writes
+                _telegramService.ResetClient();
+
+                BackupService.CreateBackup(dialog.FileName);
+
+                await UpdateAuthBadgesAsync();
+
+                MessageBox.Show(
+                    Loc.Format("Msg_BackupCreated_Body", dialog.FileName),
+                    Loc.Get("Msg_BackupCreated_Title"),
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                Loc.Format("Msg_BackupCreateError_Body", ex.Message),
+                Loc.Get("Common_Error"),
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+    }
+
+    private async void RestoreBackupBtn_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var dialog = new OpenFileDialog
+            {
+                Title = Loc.Get("Settings_Backup_RestoreBtn"),
+                Filter = BackupService.DialogFilter,
+                CheckFileExists = true
+            };
+
+            if (dialog.ShowDialog(this) != true)
+            {
+                return;
+            }
+
+            var confirm = MessageBox.Show(
+                Loc.Get("Msg_RestoreConfirm_Body"),
+                Loc.Get("Msg_RestoreConfirm_Title"),
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (confirm != MessageBoxResult.Yes)
+            {
+                return;
+            }
+
+            _telegramService.ResetClient();
+            _driveService.ResetAuthorization();
+
+            BackupService.RestoreBackup(dialog.FileName);
+
+            _settingsService.LoadSettings();
+            LoadSettingsToUi();
+            await UpdateAuthBadgesAsync();
+
+            _allChats.Clear();
+            _filteredChats.Clear();
+            _ = LoadContactsAsync();
+
+            MessageBox.Show(
+                Loc.Get("Msg_RestoreSuccess_Body"),
+                Loc.Get("Msg_RestoreSuccess_Title"),
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                Loc.Format("Msg_RestoreError_Body", ex.Message),
+                Loc.Get("Common_Error"),
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
         }
     }
 
@@ -866,15 +1017,7 @@ public partial class MainWindow : Window
 
     private static string FormatBytes(long bytes)
     {
-        string[] suffixes = { "Б", "КБ", "МБ", "ГБ", "ТБ" };
-        int counter = 0;
-        decimal number = bytes;
-        while (Math.Round(number / 1024) >= 1)
-        {
-            number /= 1024;
-            counter++;
-        }
-        return $"{number:n1} {suffixes[counter]}";
+        return LocalizationService.Instance.FormatBytes(bytes);
     }
 
     private void HookContactsScroll()

@@ -13,4 +13,5 @@ public class AppSettings
 
     public string DefaultMessage { get; set; } = string.Empty;
     public bool AutoCloseOnSuccess { get; set; } = true;
+    public string Language { get; set; } = "system";
 }

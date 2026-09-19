@@ -28,8 +28,9 @@ public class GoogleDriveService
 
         try
         {
-            var credential = await GetCredentialAsync(ct);
-            return credential != null && (credential.Token.RefreshToken != null || !credential.Token.IsStale);
+            var dataStore = new EncryptedFileDataStore(_settingsService.GoogleTokensDirectory);
+            var token = await dataStore.GetAsync<Google.Apis.Auth.OAuth2.Responses.TokenResponse>("user");
+            return token != null && (!string.IsNullOrEmpty(token.RefreshToken) || !token.IsStale);
         }
         catch
         {
@@ -45,14 +46,18 @@ public class GoogleDriveService
             ClientSecret = _settingsService.Settings.GoogleClientSecret.Trim()
         };
 
-        var dataStore = new FileDataStore(_settingsService.GoogleTokensDirectory, true);
+        var dataStore = new EncryptedFileDataStore(_settingsService.GoogleTokensDirectory);
 
-        return await GoogleWebAuthorizationBroker.AuthorizeAsync(
-            secrets,
-            new[] { DriveService.Scope.DriveFile, DriveService.Scope.DriveMetadataReadonly },
-            "user",
-            ct,
-            dataStore);
+        var flow = new Google.Apis.Auth.OAuth2.Flows.GoogleAuthorizationCodeFlow(new Google.Apis.Auth.OAuth2.Flows.GoogleAuthorizationCodeFlow.Initializer
+        {
+            ClientSecrets = secrets,
+            Scopes = new[] { DriveService.Scope.DriveFile, DriveService.Scope.DriveMetadataReadonly },
+            DataStore = dataStore,
+            Prompt = "select_account"
+        });
+
+        return await new Google.Apis.Auth.OAuth2.AuthorizationCodeInstalledApp(flow, new Google.Apis.Auth.OAuth2.LocalServerCodeReceiver())
+            .AuthorizeAsync("user", ct);
     }
 
     public async Task<bool> AuthorizeAsync(CancellationToken ct = default)
@@ -63,7 +68,7 @@ public class GoogleDriveService
             _driveService = new DriveService(new BaseClientService.Initializer
             {
                 HttpClientInitializer = credential,
-                ApplicationName = "GDriveTelegramSender"
+                ApplicationName = "shareman"
             });
             return true;
         }
@@ -74,8 +79,40 @@ public class GoogleDriveService
         }
     }
 
+    private string? _cachedUserEmail;
+
+    public async Task<string?> GetUserEmailAsync(CancellationToken ct = default)
+    {
+        if (!string.IsNullOrEmpty(_cachedUserEmail)) return _cachedUserEmail;
+        try
+        {
+            if (_driveService == null)
+            {
+                if (!await IsAuthorizedAsync(ct)) return null;
+                var credential = await GetCredentialAsync(ct);
+                _driveService = new DriveService(new BaseClientService.Initializer
+                {
+                    HttpClientInitializer = credential,
+                    ApplicationName = "shareman"
+                });
+            }
+
+            var request = _driveService.About.Get();
+            request.Fields = "user(displayName,emailAddress)";
+            var about = await request.ExecuteAsync(ct);
+            _cachedUserEmail = about.User?.EmailAddress ?? about.User?.DisplayName;
+            return _cachedUserEmail;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Failed to get user info: {ex.Message}");
+            return null;
+        }
+    }
+
     public void ResetAuthorization()
     {
+        _cachedUserEmail = null;
         _driveService?.Dispose();
         _driveService = null;
 
@@ -105,7 +142,7 @@ public class GoogleDriveService
 
         if (!File.Exists(filePath))
         {
-            throw new FileNotFoundException("Файл не найден", filePath);
+            throw new FileNotFoundException(Loc.Get("Exception_FileNotFound"), filePath);
         }
 
         var fileInfo = new FileInfo(filePath);
@@ -149,13 +186,13 @@ public class GoogleDriveService
 
         if (result.Status != UploadStatus.Completed)
         {
-            throw new Exception($"Ошибка загрузки в Google Drive: {result.Exception?.Message ?? result.Status.ToString()}");
+            throw new Exception(Loc.Format("Exception_GDriveUploadFailed", result.Exception?.Message ?? result.Status.ToString()));
         }
 
         var uploaded = request.ResponseBody;
         if (uploaded == null || string.IsNullOrEmpty(uploaded.Id))
         {
-            throw new Exception("Не удалось получить ID загруженного файла от Google Drive");
+            throw new Exception(Loc.Get("Exception_GDriveIdFailed"));
         }
 
         // Make file public ("anyone with the link can view")

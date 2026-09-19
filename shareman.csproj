@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>GDriveTelegramSender</RootNamespace>
+    <AssemblyName>shareman</AssemblyName>
+    <Product>shareman</Product>
+    <AssemblyTitle>shareman</AssemblyTitle>
+    <Description>shareman</Description>
+    <ApplicationIcon>Resources\shareman.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Google.Apis.Drive.v3" Version="1.76.0.4261" />
+    <PackageReference Include="WTelegramClient" Version="4.4.8" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\shareman.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\Localization\*.json" />
+  </ItemGroup>
+
+</Project>

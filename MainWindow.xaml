@@ -3,7 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="clr-namespace:GDriveTelegramSender.Ui"
         xmlns:effects="clr-namespace:GDriveTelegramSender.Ui.Effects"
-        Title="Google Drive &amp; Telegram Sender"
+        Title="{ui:Loc App_Title}"
+        Icon="Resources/shareman.ico"
         Height="740" Width="520"
         MinHeight="640" MinWidth="470"
         WindowStartupLocation="CenterScreen"
@@ -33,8 +34,8 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                <TextBlock Text="Drive &amp; Telegram" Style="{StaticResource PageTitle}"/>
-                <TextBlock Text="Быстрая отправка файлов через Google Drive" Style="{StaticResource RowSubtitle}"/>
+                <TextBlock Text="{ui:Loc App_Header_Title}" Style="{StaticResource PageTitle}"/>
+                <TextBlock Text="{ui:Loc App_Header_Subtitle}" Style="{StaticResource RowSubtitle}"/>
             </StackPanel>
 
             <Button x:Name="ToggleSettingsBtn"
@@ -47,7 +48,7 @@
                     <Viewbox Width="14" Height="14" Margin="0,0,7,0" VerticalAlignment="Center">
                         <Path x:Name="ToggleSettingsIcon" Style="{StaticResource OutlineIcon}" Data="{x:Static ui:AppIcons.SettingsOutlined}"/>
                     </Viewbox>
-                    <TextBlock x:Name="ToggleSettingsText" Text="Настройки" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="ToggleSettingsText" Text="{ui:Loc Common_Settings}" VerticalAlignment="Center"/>
                 </StackPanel>
             </Button>
         </Grid>
@@ -76,7 +77,7 @@
 
                     <!-- Section: Selected File -->
                     <StackPanel Grid.Row="0">
-                        <TextBlock Text="Выбранный файл" Style="{StaticResource SectionTitle}" Margin="2,0,0,6"/>
+                        <TextBlock Text="{ui:Loc Send_SelectedFile_Title}" Style="{StaticResource SectionTitle}" Margin="2,0,0,6"/>
                         <Border Style="{StaticResource Hero}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -86,13 +87,13 @@
 
                                 <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0">
                                     <TextBlock x:Name="FileNameText"
-                                               Text="Файл не выбран"
+                                               Text="{ui:Loc Send_NoFileSelected}"
                                                Style="{StaticResource RowTitle}"
                                                FontSize="13"
                                                FontWeight="SemiBold"
                                                TextTrimming="CharacterEllipsis"/>
                                     <TextBlock x:Name="FileSizeText"
-                                               Text="Перетащите файл в окно или нажмите «Выбрать»"
+                                               Text="{ui:Loc Send_DragDropOrChoose}"
                                                Style="{StaticResource RowSubtitle}"/>
                                 </StackPanel>
 
@@ -105,7 +106,7 @@
                                         <Viewbox Width="14" Height="14" Margin="0,0,6,0">
                                             <Path Style="{StaticResource OutlineIcon}" Data="{x:Static ui:AppIcons.FolderOpenOutlined}"/>
                                         </Viewbox>
-                                        <TextBlock x:Name="ChangeFileBtnText" Text="Выбрать" VerticalAlignment="Center"/>
+                                        <TextBlock x:Name="ChangeFileBtnText" Text="{ui:Loc Common_Choose}" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Button>
                             </Grid>
@@ -119,7 +120,7 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="0" Text="Получатель" Style="{StaticResource SectionTitle}" Margin="2,4,0,6"/>
+                        <TextBlock Grid.Row="0" Text="{ui:Loc Send_Recipient_Title}" Style="{StaticResource SectionTitle}" Margin="2,4,0,6"/>
 
                         <Border Grid.Row="1" Style="{StaticResource Card}" Margin="0">
                             <Grid>
@@ -145,7 +146,7 @@
                                             <Path Style="{StaticResource OutlineIconDirect}" Stroke="{DynamicResource SettingsMuted}" Data="{x:Static ui:AppIcons.SearchOutlined}"/>
                                         </Viewbox>
                                         <TextBlock x:Name="SearchPlaceholder"
-                                                   Text="Поиск чатов и контактов..."
+                                                   Text="{ui:Loc Send_SearchPlaceholder}"
                                                    Foreground="{DynamicResource SettingsMuted}"
                                                    FontSize="12"
                                                    VerticalAlignment="Center"
@@ -259,7 +260,7 @@
                                 <!-- Loading / Empty indicator -->
                                 <TextBlock x:Name="ContactsStatusText"
                                            Grid.Row="1"
-                                           Text="Загрузка списка контактов..."
+                                           Text="{ui:Loc Send_LoadingContactsList}"
                                            Style="{StaticResource MutedText}"
                                            HorizontalAlignment="Center"
                                            VerticalAlignment="Center"
@@ -282,7 +283,7 @@
                                                                    Fill="{DynamicResource SettingsAccent}"
                                                                    HorizontalAlignment="Center"/>
                                         <TextBlock x:Name="ContactsLoadingStatus"
-                                                   Text="Загрузка контактов..."
+                                                   Text="{ui:Loc Send_LoadingContacts}"
                                                    FontSize="12"
                                                    FontWeight="Medium"
                                                    Foreground="{DynamicResource SettingsText}"
@@ -296,7 +297,7 @@
 
                     <!-- Section: Optional Comment -->
                     <StackPanel Grid.Row="2" Margin="0,2,0,0">
-                        <TextBlock Text="Комментарий" Style="{StaticResource SectionTitle}" Margin="2,4,0,6"/>
+                        <TextBlock Text="{ui:Loc Send_Comment_Title}" Style="{StaticResource SectionTitle}" Margin="2,4,0,6"/>
                         <Border Style="{StaticResource Card}" Padding="12,10">
                             <Grid>
                                 <TextBox x:Name="MessageTextBox"
@@ -310,7 +311,7 @@
                                          LostFocus="MessageTextBox_LostFocus"
                                          TextChanged="MessageTextBox_TextChanged"/>
                                 <TextBlock x:Name="MessagePlaceholder"
-                                           Text="Добавьте комментарий к файлу..."
+                                           Text="{ui:Loc Send_CommentPlaceholder}"
                                            Foreground="{DynamicResource SettingsMuted}"
                                            FontSize="12"
                                            VerticalAlignment="Top"
@@ -329,7 +330,7 @@
                                         <Path Style="{StaticResource OutlineIconDirect}" Stroke="{DynamicResource SettingsAccent}" Data="{x:Static ui:AppIcons.CloudUploadOutlined}"/>
                                     </Viewbox>
                                     <TextBlock x:Name="ProgressStatusText"
-                                               Text="Загрузка на Google Drive..."
+                                               Text="{ui:Loc Send_Progress_UploadingGoogleDrive}"
                                                FontSize="12"
                                                FontWeight="SemiBold"
                                                Foreground="{DynamicResource SettingsAccent}"
@@ -349,7 +350,7 @@
                                          Height="6"/>
 
                             <TextBlock x:Name="ProgressDetailsText"
-                                       Text="0 MB из 0 MB"
+                                       Text="{ui:Loc Send_Progress_InitialDetails}"
                                        Style="{StaticResource RowSubtitle}"
                                        Margin="0,6,0,0"/>
                         </StackPanel>
@@ -371,7 +372,7 @@
                                 <Viewbox Width="16" Height="16" Margin="0,0,8,0">
                                     <Path Style="{StaticResource OutlineIcon}" Data="{x:Static ui:AppIcons.SendOutlined}"/>
                                 </Viewbox>
-                                <TextBlock Text="Загрузить на Drive и отправить" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                <TextBlock Text="{ui:Loc Send_Button_UploadAndSend}" FontWeight="SemiBold" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
 
@@ -386,7 +387,7 @@
                                 <Viewbox Width="14" Height="14" Margin="0,0,6,0">
                                     <Path Style="{StaticResource OutlineIcon}" Data="{x:Static ui:AppIcons.CloseOutlined}"/>
                                 </Viewbox>
-                                <TextBlock Text="Закрыть" VerticalAlignment="Center"/>
+                                <TextBlock Text="{ui:Loc Common_Close}" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                     </Grid>
@@ -408,7 +409,7 @@
                         </StackPanel.RenderTransform>
 
                         <!-- SECTION 1: TELEGRAM -->
-                        <TextBlock Text="Аккаунт Telegram" Style="{StaticResource SectionTitle}" Margin="2,0,0,6"/>
+                        <TextBlock Text="{ui:Loc Settings_Tg_SectionTitle}" Style="{StaticResource SectionTitle}" Margin="2,0,0,6"/>
                         <Border Style="{StaticResource Card}">
                             <StackPanel>
                                 <!-- Row 1: API ID -->
@@ -424,8 +425,8 @@
                                             <Path Style="{StaticResource OutlineIconDirect}" Stroke="{DynamicResource SettingsAccent}" Data="{x:Static ui:AppIcons.KeyOutlined}"/>
                                         </Viewbox>
                                         <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,16,0">
-                                            <TextBlock Text="API ID" Style="{StaticResource RowTitle}"/>
-                                            <TextBlock Text="Идентификатор приложения из my.telegram.org" Style="{StaticResource RowSubtitle}"/>
+                                            <TextBlock Text="{ui:Loc Settings_Tg_ApiId_Title}" Style="{StaticResource RowTitle}"/>
+                                            <TextBlock Text="{ui:Loc Settings_Tg_ApiId_Desc}" Style="{StaticResource RowSubtitle}"/>
                                         </StackPanel>
                                         <TextBox x:Name="TgApiIdBox" Grid.Column="3" Width="160" Style="{StaticResource ModernTextBox}"/>
                                     </Grid>
@@ -444,10 +445,10 @@
                                             <Path Style="{StaticResource OutlineIconDirect}" Stroke="{DynamicResource SettingsAccent}" Data="{x:Static ui:AppIcons.LockOutlined}"/>
                                         </Viewbox>
                                         <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,16,0">
-                                            <TextBlock Text="API Hash" Style="{StaticResource RowTitle}"/>
-                                            <TextBlock Text="Секретный хэш из API development tools" Style="{StaticResource RowSubtitle}"/>
+                                            <TextBlock Text="{ui:Loc Settings_Tg_ApiHash_Title}" Style="{StaticResource RowTitle}"/>
+                                            <TextBlock Text="{ui:Loc Settings_Tg_ApiHash_Desc}" Style="{StaticResource RowSubtitle}"/>
                                         </StackPanel>
-                                        <TextBox x:Name="TgApiHashBox" Grid.Column="3" Width="200" Style="{StaticResource ModernTextBox}"/>
+                                        <ui:MaskedInputField x:Name="TgApiHashBox" Grid.Column="3" Width="200"/>
                                     </Grid>
                                 </Border>
 
@@ -464,10 +465,10 @@
                                             <Path Style="{StaticResource OutlineIconDirect}" Stroke="{DynamicResource SettingsAccent}" Data="{x:Static ui:AppIcons.PhoneOutlined}"/>
                                         </Viewbox>
                                         <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,16,0">
-                                            <TextBlock Text="Номер телефона" Style="{StaticResource RowTitle}"/>
-                                            <TextBlock Text="В международном формате (+79991234567)" Style="{StaticResource RowSubtitle}"/>
+                                            <TextBlock Text="{ui:Loc Settings_Tg_Phone_Title}" Style="{StaticResource RowTitle}"/>
+                                            <TextBlock Text="{ui:Loc Settings_Tg_Phone_Desc}" Style="{StaticResource RowSubtitle}"/>
                                         </StackPanel>
-                                        <TextBox x:Name="TgPhoneBox" Grid.Column="3" Width="160" Style="{StaticResource ModernTextBox}"/>
+                                        <ui:MaskedInputField x:Name="TgPhoneBox" Grid.Column="3" Width="160"/>
                                     </Grid>
                                 </Border>
 
@@ -478,7 +479,7 @@
                                         <Border Style="{StaticResource StatusBadge}" HorizontalAlignment="Left">
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                 <Ellipse x:Name="TgStatusDot" Width="7" Height="7" Fill="{DynamicResource SettingsMuted}" Margin="0,0,6,0"/>
-                                                <TextBlock x:Name="TgStatusBadge" Text="Не подключен" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource SettingsMuted}"/>
+                                                <TextBlock x:Name="TgStatusBadge" Text="{ui:Loc Status_NotConnected}" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource SettingsMuted}"/>
                                             </StackPanel>
                                         </Border>
 
@@ -491,7 +492,7 @@
                                                     <Viewbox Width="14" Height="14" Margin="0,0,6,0">
                                                         <Path Style="{StaticResource OutlineIcon}" Data="{x:Static ui:AppIcons.LogoutOutlined}"/>
                                                     </Viewbox>
-                                                    <TextBlock Text="Выйти" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{ui:Loc Common_Logout}" VerticalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
 
@@ -502,7 +503,7 @@
                                                     <Viewbox Width="14" Height="14" Margin="0,0,6,0">
                                                         <Path Style="{StaticResource OutlineIcon}" Data="{x:Static ui:AppIcons.LoginOutlined}"/>
                                                     </Viewbox>
-                                                    <TextBlock Text="Войти в Telegram" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{ui:Loc Settings_Tg_LoginBtn}" VerticalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                         </StackPanel>
@@ -512,7 +513,7 @@
                         </Border>
 
                         <!-- SECTION 2: GOOGLE DRIVE -->
-                        <TextBlock Text="Google Drive API" Style="{StaticResource SectionTitle}"/>
+                        <TextBlock Text="{ui:Loc Settings_GDrive_SectionTitle}" Style="{StaticResource SectionTitle}"/>
                         <Border Style="{StaticResource Card}">
                             <StackPanel>
                                 <!-- Row 1: Load Secret JSON -->
@@ -528,8 +529,8 @@
                                             <Path Style="{StaticResource OutlineIconDirect}" Stroke="{DynamicResource SettingsAccent}" Data="{x:Static ui:AppIcons.FileOpenOutlined}"/>
                                         </Viewbox>
                                         <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,16,0">
-                                            <TextBlock Text="Файл client_secret.json" Style="{StaticResource RowTitle}"/>
-                                            <TextBlock Text="Загрузить готовые ключи из Google Cloud Console" Style="{StaticResource RowSubtitle}"/>
+                                            <TextBlock Text="{ui:Loc Settings_GDrive_SecretFile_Title}" Style="{StaticResource RowTitle}"/>
+                                            <TextBlock Text="{ui:Loc Settings_GDrive_SecretFile_Desc}" Style="{StaticResource RowSubtitle}"/>
                                         </StackPanel>
                                         <Button x:Name="LoadSecretJsonBtn"
                                                 Grid.Column="3"
@@ -539,7 +540,7 @@
                                                 <Viewbox Width="14" Height="14" Margin="0,0,6,0">
                                                     <Path Style="{StaticResource OutlineIcon}" Data="{x:Static ui:AppIcons.UploadOutlined}"/>
                                                 </Viewbox>
-                                                <TextBlock Text="Загрузить JSON" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{ui:Loc Settings_GDrive_LoadJsonBtn}" VerticalAlignment="Center"/>
                                             </StackPanel>
                                         </Button>
                                     </Grid>
@@ -558,8 +559,8 @@
                                             <Path Style="{StaticResource OutlineIconDirect}" Stroke="{DynamicResource SettingsAccent}" Data="{x:Static ui:AppIcons.KeyOutlined}"/>
                                         </Viewbox>
                                         <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,16,0">
-                                            <TextBlock Text="Client ID" Style="{StaticResource RowTitle}"/>
-                                            <TextBlock Text="Идентификатор OAuth 2.0 клиента" Style="{StaticResource RowSubtitle}"/>
+                                            <TextBlock Text="{ui:Loc Settings_GDrive_ClientId_Title}" Style="{StaticResource RowTitle}"/>
+                                            <TextBlock Text="{ui:Loc Settings_GDrive_ClientId_Desc}" Style="{StaticResource RowSubtitle}"/>
                                         </StackPanel>
                                         <TextBox x:Name="GoogleClientIdBox" Grid.Column="3" Width="180" Style="{StaticResource ModernTextBox}"/>
                                     </Grid>
@@ -578,10 +579,10 @@
                                             <Path Style="{StaticResource OutlineIconDirect}" Stroke="{DynamicResource SettingsAccent}" Data="{x:Static ui:AppIcons.LockOutlined}"/>
                                         </Viewbox>
                                         <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,16,0">
-                                            <TextBlock Text="Client Secret" Style="{StaticResource RowTitle}"/>
-                                            <TextBlock Text="Секретный ключ клиента Google" Style="{StaticResource RowSubtitle}"/>
+                                            <TextBlock Text="{ui:Loc Settings_GDrive_ClientSecret_Title}" Style="{StaticResource RowTitle}"/>
+                                            <TextBlock Text="{ui:Loc Settings_GDrive_ClientSecret_Desc}" Style="{StaticResource RowSubtitle}"/>
                                         </StackPanel>
-                                        <TextBox x:Name="GoogleClientSecretBox" Grid.Column="3" Width="180" Style="{StaticResource ModernTextBox}"/>
+                                        <ui:MaskedInputField x:Name="GoogleClientSecretBox" Grid.Column="3" Width="180"/>
                                     </Grid>
                                 </Border>
 
@@ -592,7 +593,7 @@
                                         <Border Style="{StaticResource StatusBadge}" HorizontalAlignment="Left">
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                 <Ellipse x:Name="GoogleStatusDot" Width="7" Height="7" Fill="{DynamicResource SettingsMuted}" Margin="0,0,6,0"/>
-                                                <TextBlock x:Name="GoogleStatusBadge" Text="Не подключен" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource SettingsMuted}"/>
+                                                <TextBlock x:Name="GoogleStatusBadge" Text="{ui:Loc Status_NotConnected}" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource SettingsMuted}"/>
                                             </StackPanel>
                                         </Border>
 
@@ -603,9 +604,9 @@
                                                     Click="GoogleResetBtn_Click">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <Viewbox Width="14" Height="14" Margin="0,0,6,0">
-                                                        <Path Style="{StaticResource OutlineIcon}" Data="{x:Static ui:AppIcons.RestoreOutlined}"/>
+                                                        <Path Style="{StaticResource OutlineIcon}" Data="{x:Static ui:AppIcons.LogoutOutlined}"/>
                                                     </Viewbox>
-                                                    <TextBlock Text="Сбросить" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{ui:Loc Common_Logout}" VerticalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
 
@@ -616,7 +617,7 @@
                                                     <Viewbox Width="14" Height="14" Margin="0,0,6,0">
                                                         <Path Style="{StaticResource OutlineIcon}" Data="{x:Static ui:AppIcons.CheckOutlined}"/>
                                                     </Viewbox>
-                                                    <TextBlock Text="Авторизовать Google Drive" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{ui:Loc Settings_GDrive_AuthBtn}" VerticalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                         </StackPanel>
@@ -626,7 +627,7 @@
                         </Border>
 
                         <!-- SECTION 3: WINDOWS INTEGRATION -->
-                        <TextBlock Text="Интеграция с Windows" Style="{StaticResource SectionTitle}"/>
+                        <TextBlock Text="{ui:Loc Settings_Win_SectionTitle}" Style="{StaticResource SectionTitle}"/>
                         <Border Style="{StaticResource Card}">
                             <StackPanel>
                                 <Border BorderBrush="{DynamicResource SettingsLine}" BorderThickness="0,0,0,0" Padding="16,12">
@@ -638,17 +639,17 @@
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
                                         <Viewbox Width="18" Height="18" VerticalAlignment="Center">
-                                            <Path Style="{StaticResource OutlineIconDirect}" Stroke="{DynamicResource SettingsWarning}" Data="{x:Static ui:AppIcons.ShortcutOutlined}"/>
+                                            <Path Style="{StaticResource OutlineIconDirect}" Stroke="{DynamicResource SettingsAccent}" Data="{x:Static ui:AppIcons.ShortcutOutlined}"/>
                                         </Viewbox>
                                         <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,16,0">
-                                            <TextBlock Text="Меню «Отправить» Проводника" Style="{StaticResource RowTitle}"/>
-                                            <TextBlock Text="Контекстное меню ПКМ по файлу ➔ Отправить" Style="{StaticResource RowSubtitle}"/>
+                                            <TextBlock Text="{ui:Loc Settings_Win_SendTo_Title}" Style="{StaticResource RowTitle}"/>
+                                            <TextBlock Text="{ui:Loc Settings_Win_SendTo_Desc}" Style="{StaticResource RowSubtitle}"/>
                                         </StackPanel>
 
                                         <Border Grid.Column="3" Style="{StaticResource StatusBadge}">
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                 <Ellipse x:Name="SendToStatusDot" Width="7" Height="7" Fill="{DynamicResource SettingsMuted}" Margin="0,0,6,0"/>
-                                                <TextBlock x:Name="SendToStatusBadge" Text="Проверка..." FontSize="11" FontWeight="Medium" Foreground="{DynamicResource SettingsMuted}"/>
+                                                <TextBlock x:Name="SendToStatusBadge" Text="{ui:Loc Status_Checking}" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource SettingsMuted}"/>
                                             </StackPanel>
                                         </Border>
                                     </Grid>
@@ -665,7 +666,7 @@
                                                 <Viewbox Width="14" Height="14" Margin="0,0,6,0">
                                                     <Path Style="{StaticResource OutlineIcon}" Data="{x:Static ui:AppIcons.DeleteOutlined}"/>
                                                 </Viewbox>
-                                                <TextBlock Text="Удалить" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{ui:Loc Common_Delete}" VerticalAlignment="Center"/>
                                             </StackPanel>
                                         </Button>
 
@@ -676,7 +677,7 @@
                                                 <Viewbox Width="14" Height="14" Margin="0,0,6,0">
                                                     <Path Style="{StaticResource OutlineIcon}" Data="{x:Static ui:AppIcons.AddOutlined}"/>
                                                 </Viewbox>
-                                                <TextBlock Text="Добавить в «Отправить»" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{ui:Loc Settings_Win_AddSendToBtn}" VerticalAlignment="Center"/>
                                             </StackPanel>
                                         </Button>
                                     </StackPanel>
@@ -685,30 +686,111 @@
                         </Border>
 
                         <!-- SECTION 4: OPTIONS -->
-                        <TextBlock Text="Параметры работы" Style="{StaticResource SectionTitle}"/>
+                        <TextBlock Text="{ui:Loc Settings_Options_SectionTitle}" Style="{StaticResource SectionTitle}"/>
                         <Border Style="{StaticResource Card}">
-                            <Border Padding="16,12">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="22"/>
-                                        <ColumnDefinition Width="12"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Viewbox Width="18" Height="18" VerticalAlignment="Center">
-                                        <Path Style="{StaticResource OutlineIconDirect}" Stroke="{DynamicResource SettingsMuted}" Data="{x:Static ui:AppIcons.TuneOutlined}"/>
-                                    </Viewbox>
-                                    <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,16,0">
-                                        <TextBlock Text="Автоматическое закрытие" Style="{StaticResource RowTitle}"/>
-                                        <TextBlock Text="Закрывать окно сразу после успешной отправки" Style="{StaticResource RowSubtitle}"/>
+                            <StackPanel>
+                                <!-- Row 1: Language -->
+                                <Border x:Name="LanguageRow" BorderBrush="{DynamicResource SettingsLine}" BorderThickness="0,0,0,1" Padding="16,12">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="22"/>
+                                            <ColumnDefinition Width="12"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Viewbox Width="18" Height="18" VerticalAlignment="Center">
+                                            <Path Style="{StaticResource OutlineIconDirect}" Stroke="{DynamicResource SettingsAccent}" Data="{x:Static ui:AppIcons.LanguageOutlined}"/>
+                                        </Viewbox>
+                                        <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,16,0">
+                                            <TextBlock Text="{ui:Loc Settings_Options_Language_Title}" Style="{StaticResource RowTitle}"/>
+                                            <TextBlock Text="{ui:Loc Settings_Options_Language_Desc}" Style="{StaticResource RowSubtitle}"/>
+                                        </StackPanel>
+                                        <ComboBox x:Name="LanguageComboBox"
+                                                  Grid.Column="3"
+                                                  Width="150"
+                                                  Height="32"
+                                                  Style="{StaticResource ModernComboBox}"
+                                                  DisplayMemberPath="DisplayName"
+                                                  SelectedValuePath="Code"
+                                                  SelectionChanged="LanguageComboBox_SelectionChanged"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Row 2: Auto Close -->
+                                <Border Padding="16,12">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="22"/>
+                                            <ColumnDefinition Width="12"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Viewbox Width="18" Height="18" VerticalAlignment="Center">
+                                            <Path Style="{StaticResource OutlineIconDirect}" Stroke="{DynamicResource SettingsAccent}" Data="{x:Static ui:AppIcons.TuneOutlined}"/>
+                                        </Viewbox>
+                                        <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,16,0">
+                                            <TextBlock Text="{ui:Loc Settings_Options_AutoClose_Title}" Style="{StaticResource RowTitle}"/>
+                                            <TextBlock Text="{ui:Loc Settings_Options_AutoClose_Desc}" Style="{StaticResource RowSubtitle}"/>
+                                        </StackPanel>
+                                        <CheckBox x:Name="AutoCloseCheckBox"
+                                                  Grid.Column="3"
+                                                  Style="{StaticResource Toggle}"
+                                                  VerticalAlignment="Center"
+                                                  IsChecked="True"/>
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- SECTION 5: BACKUP & RESTORE -->
+                        <TextBlock Text="{ui:Loc Settings_Backup_SectionTitle}" Style="{StaticResource SectionTitle}"/>
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <Border BorderBrush="{DynamicResource SettingsLine}" BorderThickness="0,0,0,0" Padding="16,12">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="22"/>
+                                            <ColumnDefinition Width="12"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Viewbox Width="18" Height="18" VerticalAlignment="Center">
+                                            <Path Style="{StaticResource OutlineIconDirect}" Stroke="{DynamicResource SettingsAccent}" Data="{x:Static ui:AppIcons.RestoreOutlined}"/>
+                                        </Viewbox>
+                                        <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                            <TextBlock Text="{ui:Loc Settings_Backup_Title}" Style="{StaticResource RowTitle}"/>
+                                            <TextBlock Text="{ui:Loc Settings_Backup_Desc}" Style="{StaticResource RowSubtitle}"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+
+                                <Border BorderBrush="{DynamicResource SettingsLine}" BorderThickness="0,1,0,0"
+                                        Background="{DynamicResource SettingsWash}" Padding="16,10">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <Button x:Name="RestoreBackupBtn"
+                                                Style="{StaticResource SecondaryButton}"
+                                                Margin="0,0,8,0"
+                                                Click="RestoreBackupBtn_Click">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Viewbox Width="14" Height="14" Margin="0,0,6,0">
+                                                    <Path Style="{StaticResource OutlineIcon}" Data="{x:Static ui:AppIcons.UploadOutlined}"/>
+                                                </Viewbox>
+                                                <TextBlock Text="{ui:Loc Settings_Backup_RestoreBtn}" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <Button x:Name="CreateBackupBtn"
+                                                Style="{StaticResource PrimaryButton}"
+                                                Click="CreateBackupBtn_Click">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Viewbox Width="14" Height="14" Margin="0,0,6,0">
+                                                    <Path Style="{StaticResource OutlineIcon}" Data="{x:Static ui:AppIcons.SaveOutlined}"/>
+                                                </Viewbox>
+                                                <TextBlock Text="{ui:Loc Settings_Backup_CreateBtn}" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
                                     </StackPanel>
-                                    <CheckBox x:Name="AutoCloseCheckBox"
-                                              Grid.Column="3"
-                                              Style="{StaticResource Toggle}"
-                                              VerticalAlignment="Center"
-                                              IsChecked="True"/>
-                                </Grid>
-                            </Border>
+                                </Border>
+                            </StackPanel>
                         </Border>
 
                         <!-- Save & Return Button -->
@@ -721,7 +803,7 @@
                                 <Viewbox Width="16" Height="16" Margin="0,0,8,0">
                                     <Path Style="{StaticResource OutlineIcon}" Data="{x:Static ui:AppIcons.SaveOutlined}"/>
                                 </Viewbox>
-                                <TextBlock Text="Сохранить настройки и вернуться" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                <TextBlock Text="{ui:Loc Settings_SaveAndReturnBtn}" FontWeight="SemiBold" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                     </StackPanel>

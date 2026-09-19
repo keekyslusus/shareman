@@ -78,7 +78,7 @@ public class TelegramClientService : IDisposable
     {
         if (!IsConfigured)
         {
-            throw new InvalidOperationException("API ID и API Hash Telegram не настроены.");
+            throw new InvalidOperationException(Loc.Get("Exception_TgNotConfigured"));
         }
 
         _promptCallback = promptCallback;
@@ -108,8 +108,8 @@ public class TelegramClientService : IDisposable
         result.Add(new TelegramChatItem
         {
             Id = client.UserId,
-            Title = "Избранное (Saved Messages)",
-            DisplaySubtitle = "Личное хранилище",
+            Title = Loc.Get("Chat_SavedMessages_Title"),
+            DisplaySubtitle = Loc.Get("Chat_SavedMessages_Subtitle"),
             Username = client.User?.MainUsername != null ? $"@{client.User.MainUsername}" : "",
             Initials = "★",
             AvatarBgColor = "#2563EB",
@@ -143,7 +143,7 @@ public class TelegramClientService : IDisposable
                             Id = user.id,
                             Title = name,
                             Username = username,
-                            DisplaySubtitle = !string.IsNullOrEmpty(username) ? username : (user.phone ?? "Контакт"),
+                            DisplaySubtitle = !string.IsNullOrEmpty(username) ? username : (user.phone ?? Loc.Get("Chat_Contact_Default")),
                             Initials = initials,
                             AvatarBgColor = color,
                             Peer = user,
@@ -162,7 +162,7 @@ public class TelegramClientService : IDisposable
 
                     if (chat.IsActive)
                     {
-                        string title = chat.Title ?? "Группа";
+                        string title = chat.Title ?? Loc.Get("Chat_Group_Default");
                         string initials = GetInitials(title);
                         string color = GetColorForId(chat.ID);
 
@@ -171,7 +171,7 @@ public class TelegramClientService : IDisposable
                             Id = chat.ID,
                             Title = title,
                             Username = "",
-                            DisplaySubtitle = "Группа",
+                            DisplaySubtitle = Loc.Get("Chat_Group_Default"),
                             Initials = initials,
                             AvatarBgColor = color,
                             Peer = chat,
@@ -208,7 +208,7 @@ public class TelegramClientService : IDisposable
                         Id = user.id,
                         Title = name,
                         Username = username,
-                        DisplaySubtitle = !string.IsNullOrEmpty(username) ? username : (user.phone ?? "Контакт"),
+                        DisplaySubtitle = !string.IsNullOrEmpty(username) ? username : (user.phone ?? Loc.Get("Chat_Contact_Default")),
                         Initials = initials,
                         AvatarBgColor = color,
                         Peer = user,
@@ -226,11 +226,37 @@ public class TelegramClientService : IDisposable
         return result.Take(30).ToList();
     }
 
-    public async Task SendMessageAsync(InputPeer peer, string message)
+    public static (string Message, MessageEntity[] Entities) FormatFileMessage(string? userComment, string fileName, string publicLink)
+    {
+        var sb = new System.Text.StringBuilder();
+        string cleanComment = userComment?.Trim() ?? string.Empty;
+        if (!string.IsNullOrEmpty(cleanComment))
+        {
+            sb.Append("comment: ").Append(cleanComment).Append('\n');
+        }
+
+        sb.Append("filename: ");
+        int codeOffset = sb.Length;
+        string safeFileName = fileName ?? string.Empty;
+        sb.Append(safeFileName);
+        int codeLength = safeFileName.Length;
+        sb.Append('\n');
+        sb.Append("link: ").Append(publicLink ?? string.Empty);
+
+        string message = sb.ToString();
+        var entities = new MessageEntity[]
+        {
+            new MessageEntityCode { offset = codeOffset, length = codeLength }
+        };
+
+        return (message, entities);
+    }
+
+    public async Task SendMessageAsync(InputPeer peer, string message, MessageEntity[]? entities = null)
     {
         var client = GetOrCreateClient();
         await client.LoginUserIfNeeded();
-        await client.SendMessageAsync(peer, message);
+        await client.SendMessageAsync(peer, message, entities: entities);
     }
 
     public void Logout()
@@ -255,7 +281,7 @@ public class TelegramClientService : IDisposable
         string name = $"{user.first_name} {user.last_name}".Trim();
         if (string.IsNullOrWhiteSpace(name))
         {
-            name = !string.IsNullOrWhiteSpace(user.MainUsername) ? $"@{user.MainUsername}" : "Без имени";
+            name = !string.IsNullOrWhiteSpace(user.MainUsername) ? $"@{user.MainUsername}" : Loc.Get("Chat_NoName");
         }
         return name;
     }

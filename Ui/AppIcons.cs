@@ -153,6 +153,18 @@ public static class AppIcons
         Geometry.Parse("M12 8v5"),
         Geometry.Parse("M12 16h.01"));
 
+    public static Geometry LanguageOutlined { get; } = Group(
+        new EllipseGeometry(new Point(12, 12), 9, 9),
+        Geometry.Parse("M3 12h18M12 3a15.3 15.3 0 0 1 4 9 15.3 15.3 0 0 1-4 9 15.3 15.3 0 0 1-4-9 15.3 15.3 0 0 1 4-9z"));
+
+    public static Geometry EyeOutlined { get; } = Group(
+        Geometry.Parse("M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"),
+        new EllipseGeometry(new Point(12, 12), 3, 3));
+
+    public static Geometry EyeOffOutlined { get; } = Group(
+        Geometry.Parse("M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"),
+        Geometry.Parse("M1 1 23 23"));
+
     private static Geometry Group(params Geometry[] children)
     {
         var geometry = new GeometryGroup();
