@@ -7,9 +7,6 @@ namespace GDriveTelegramSender.Services;
 
 public class SettingsService
 {
-    private static readonly Lazy<SettingsService> _instance = new(() => new SettingsService());
-    public static SettingsService Instance => _instance.Value;
-
     public string DataDirectory { get; }
     public string SettingsFilePath { get; }
     public string TelegramSessionPath { get; }
@@ -17,12 +14,15 @@ public class SettingsService
 
     public AppSettings Settings { get; private set; }
 
-    private SettingsService()
+    public SettingsService(string? appDir = null)
     {
-        string? appDir = Path.GetDirectoryName(Environment.ProcessPath);
         if (string.IsNullOrEmpty(appDir))
         {
-            appDir = AppContext.BaseDirectory;
+            appDir = Path.GetDirectoryName(Environment.ProcessPath);
+            if (string.IsNullOrEmpty(appDir))
+            {
+                appDir = AppContext.BaseDirectory;
+            }
         }
 
         DataDirectory = Path.Combine(appDir, "UserData");

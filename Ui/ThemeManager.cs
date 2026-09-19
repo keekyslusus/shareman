@@ -101,7 +101,7 @@ public static class ThemeManager
             ("SettingsSelected", WithAlpha(state.Text, 0.08)),
             ("SettingsText", state.Text),
             ("SettingsMuted", state.MutedText),
-            ("SettingsSectionTitle", isLight ? Colors.Black : Colors.White),
+            ("SettingsSectionTitle", state.Text),
             ("SettingsAccent", accent),
             ("SettingsAccentForeground", accentForeground),
             ("SettingsAccentLine", WithAlpha(accent, 0.18)),

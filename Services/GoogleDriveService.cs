@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Google.Apis.Auth.OAuth2;
@@ -15,8 +17,15 @@ public record UploadProgressInfo(int Percent, long BytesSent, long TotalBytes, d
 
 public class GoogleDriveService
 {
-    private readonly SettingsService _settingsService = SettingsService.Instance;
+    private const string TargetFolderName = "shareman";
+    private readonly SettingsService _settingsService;
     private DriveService? _driveService;
+    private string? _cachedFolderId;
+
+    public GoogleDriveService(SettingsService settingsService)
+    {
+        _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
+    }
 
     public bool IsConfigured =>
         !string.IsNullOrWhiteSpace(_settingsService.Settings.GoogleClientId) &&
@@ -113,6 +122,7 @@ public class GoogleDriveService
     public void ResetAuthorization()
     {
         _cachedUserEmail = null;
+        _cachedFolderId = null;
         _driveService?.Dispose();
         _driveService = null;
 
@@ -127,6 +137,53 @@ public class GoogleDriveService
             {
                 Debug.WriteLine($"Failed to reset Google tokens: {ex.Message}");
             }
+        }
+    }
+
+    private async Task<string> GetOrCreateFolderIdAsync(CancellationToken ct)
+    {
+        if (!string.IsNullOrEmpty(_cachedFolderId))
+        {
+            return _cachedFolderId;
+        }
+
+        if (_driveService == null)
+        {
+            await AuthorizeAsync(ct);
+        }
+
+        try
+        {
+            var listRequest = _driveService!.Files.List();
+            listRequest.Q = $"mimeType = 'application/vnd.google-apps.folder' and name = '{TargetFolderName}' and trashed = false";
+            listRequest.Fields = "files(id, name)";
+            listRequest.Spaces = "drive";
+
+            var result = await listRequest.ExecuteAsync(ct);
+            var existingFolder = result.Files?.FirstOrDefault();
+            if (existingFolder != null && !string.IsNullOrEmpty(existingFolder.Id))
+            {
+                _cachedFolderId = existingFolder.Id;
+                return _cachedFolderId;
+            }
+
+            var folderMetadata = new Google.Apis.Drive.v3.Data.File
+            {
+                Name = TargetFolderName,
+                MimeType = "application/vnd.google-apps.folder"
+            };
+
+            var createRequest = _driveService.Files.Create(folderMetadata);
+            createRequest.Fields = "id";
+            var createdFolder = await createRequest.ExecuteAsync(ct);
+
+            _cachedFolderId = createdFolder.Id;
+            return _cachedFolderId;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Failed to get or create '{TargetFolderName}' folder on Google Drive: {ex.Message}");
+            throw;
         }
     }
 
@@ -145,10 +202,13 @@ public class GoogleDriveService
             throw new FileNotFoundException(Loc.Get("Exception_FileNotFound"), filePath);
         }
 
+        var folderId = await GetOrCreateFolderIdAsync(ct);
+
         var fileInfo = new FileInfo(filePath);
         var fileMetadata = new Google.Apis.Drive.v3.Data.File
         {
-            Name = fileInfo.Name
+            Name = fileInfo.Name,
+            Parents = new List<string> { folderId }
         };
 
         string mimeType = GetMimeType(filePath);
@@ -182,10 +242,20 @@ public class GoogleDriveService
             }
         };
 
-        var result = await request.UploadAsync(ct);
+        IUploadProgress result;
+        try
+        {
+            result = await request.UploadAsync(ct);
+        }
+        catch
+        {
+            _cachedFolderId = null;
+            throw;
+        }
 
         if (result.Status != UploadStatus.Completed)
         {
+            _cachedFolderId = null;
             throw new Exception(Loc.Format("Exception_GDriveUploadFailed", result.Exception?.Message ?? result.Status.ToString()));
         }
 

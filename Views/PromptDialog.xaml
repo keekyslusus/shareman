@@ -3,8 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="clr-namespace:GDriveTelegramSender.Ui"
         Title="{ui:Loc Prompt_DefaultTitle}"
-        Height="220" Width="400"
-        MinHeight="200" MinWidth="360"
+        ShowInTaskbar="False"
+        SizeToContent="Height"
+        Width="400" MinWidth="360"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         Background="{DynamicResource SettingsPaper}"
@@ -13,37 +14,21 @@
         FontSize="13"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True">
-    <Grid Margin="20">
+    <Grid Margin="20,18,20,18">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Margin="0,0,0,14">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-
-            <Border Grid.Column="0" Width="36" Height="36" CornerRadius="6"
-                    Background="{DynamicResource SettingsSurface}"
-                    BorderBrush="{DynamicResource SettingsLine}" BorderThickness="1"
-                    Margin="0,0,12,0" VerticalAlignment="Center">
-                <Viewbox Width="18" Height="18" HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <Path Style="{StaticResource OutlineIconDirect}" Stroke="{DynamicResource SettingsAccent}" Data="{x:Static ui:AppIcons.LockOutlined}"/>
-                </Viewbox>
-            </Border>
-
-            <TextBlock x:Name="MessageText"
-                       Grid.Column="1"
-                       Text="{ui:Loc Prompt_VerificationCode_Body}"
-                       TextWrapping="Wrap"
-                       FontSize="13"
-                       Foreground="{DynamicResource SettingsText}"
-                       VerticalAlignment="Center"/>
-        </Grid>
+        <TextBlock x:Name="MessageText"
+                   Grid.Row="0"
+                   Margin="0,0,0,12"
+                   Text="{ui:Loc Prompt_VerificationCode_Body}"
+                   TextWrapping="Wrap"
+                   FontSize="13"
+                   Foreground="{DynamicResource SettingsText}"
+                   VerticalAlignment="Center"/>
 
         <!-- Text input for regular text/code -->
         <TextBox x:Name="InputTextBox"
@@ -55,14 +40,14 @@
 
         <!-- PasswordBox for 2FA password -->
         <PasswordBox x:Name="InputPasswordBox"
-                      Grid.Row="1"
-                      Style="{StaticResource ModernPasswordBox}"
-                      Height="35"
-                      Visibility="Collapsed"
-                      KeyDown="InputPasswordBox_KeyDown"/>
+                     Grid.Row="1"
+                     Style="{StaticResource ModernPasswordBox}"
+                     Height="35"
+                     Visibility="Collapsed"
+                     KeyDown="InputPasswordBox_KeyDown"/>
 
         <!-- Buttons -->
-        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
             <Button x:Name="CancelBtn"
                     Content="{ui:Loc Common_Cancel}"
                     Style="{StaticResource SecondaryButton}"

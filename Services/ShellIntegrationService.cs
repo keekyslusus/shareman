@@ -3,33 +3,33 @@ using System.IO;
 
 namespace GDriveTelegramSender.Services;
 
-public static class ShellIntegrationService
+public class ShellIntegrationService
 {
     private const string ShortcutFileName = "shareman.lnk";
     private const string LegacyShortcutFileName = "Google Drive & Telegram.lnk";
 
-    public static string GetSendToDirectory()
+    public string GetSendToDirectory()
     {
         return Environment.GetFolderPath(Environment.SpecialFolder.SendTo);
     }
 
-    public static string GetShortcutPath()
+    public string GetShortcutPath()
     {
         return Path.Combine(GetSendToDirectory(), ShortcutFileName);
     }
 
-    private static string GetLegacyShortcutPath()
+    private string GetLegacyShortcutPath()
     {
         return Path.Combine(GetSendToDirectory(), LegacyShortcutFileName);
     }
 
-    public static bool IsShortcutInstalled()
+    public bool IsShortcutInstalled()
     {
         string shortcutPath = GetShortcutPath();
         return File.Exists(shortcutPath);
     }
 
-    public static bool InstallShortcut()
+    public bool InstallShortcut()
     {
         try
         {
@@ -81,7 +81,7 @@ public static class ShellIntegrationService
         }
     }
 
-    public static bool UninstallShortcut()
+    public bool UninstallShortcut()
     {
         try
         {

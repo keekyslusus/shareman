@@ -11,9 +11,14 @@ namespace GDriveTelegramSender.Services;
 
 public class TelegramClientService : IDisposable
 {
-    private readonly SettingsService _settingsService = SettingsService.Instance;
+    private readonly SettingsService _settingsService;
     private Client? _client;
     private Func<string, string?>? _promptCallback;
+
+    public TelegramClientService(SettingsService settingsService)
+    {
+        _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
+    }
 
     private static readonly string[] AvatarPalette = new[]
     {

@@ -19,6 +19,12 @@ public partial class PromptDialog : Window
 
         ThemeManager.RegisterWindow(this);
 
+        SourceInitialized += (s, e) =>
+        {
+            var handle = new WindowInteropHelper(this).Handle;
+            NativeMethods.RemoveWindowIcon(handle);
+        };
+
         if (isPassword)
         {
             InputTextBox.Visibility = Visibility.Collapsed;

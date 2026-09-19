@@ -6,14 +6,21 @@ namespace GDriveTelegramSender.Services;
 
 public record BackupValidationResult(bool IsValid, bool HasSettings, bool HasTelegramSession, bool HasGoogleTokens, string? ErrorMessage);
 
-public static class BackupService
+public class BackupService
 {
     public const string BackupFileExtension = ".gdtbak";
     public const string DialogFilter = "shareman Backup (*.gdtbak)|*.gdtbak|Zip Archive (*.zip)|*.zip|All Files (*.*)|*.*";
 
-    public static void CreateBackup(string destinationFilePath)
+    private readonly SettingsService _settingsService;
+
+    public BackupService(SettingsService settingsService)
     {
-        string dataDir = SettingsService.Instance.DataDirectory;
+        _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
+    }
+
+    public void CreateBackup(string destinationFilePath)
+    {
+        string dataDir = _settingsService.DataDirectory;
         if (!Directory.Exists(dataDir))
         {
             Directory.CreateDirectory(dataDir);
@@ -116,7 +123,7 @@ public static class BackupService
         }
     }
 
-    public static void RestoreBackup(string backupFilePath)
+    public void RestoreBackup(string backupFilePath)
     {
         var validation = ValidateBackup(backupFilePath);
         if (!validation.IsValid)
@@ -124,7 +131,7 @@ public static class BackupService
             throw new InvalidOperationException(validation.ErrorMessage ?? "Invalid backup file.");
         }
 
-        string dataDir = SettingsService.Instance.DataDirectory;
+        string dataDir = _settingsService.DataDirectory;
         string tempExtractDir = Path.Combine(Path.GetTempPath(), $"gdt_restore_{Guid.NewGuid():N}");
         Directory.CreateDirectory(tempExtractDir);
 
@@ -139,7 +146,7 @@ public static class BackupService
 
             CopyDirectoryRecursive(tempExtractDir, dataDir);
 
-            SettingsService.Instance.EnsureUserDataEncrypted();
+            _settingsService.EnsureUserDataEncrypted();
         }
         finally
         {

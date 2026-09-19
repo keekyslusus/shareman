@@ -24,8 +24,8 @@
     <SolidColorBrush x:Key="SettingsWarning" Color="#FDD663"/>
     <SolidColorBrush x:Key="SettingsError" Color="#F28B82"/>
     <SolidColorBrush x:Key="SettingsTransparent" Color="Transparent"/>
-    <SolidColorBrush x:Key="SettingsSectionTitle" Color="#000000"/>
-    <Color x:Key="SettingsSectionTitleColor">#000000</Color>
+    <SolidColorBrush x:Key="SettingsSectionTitle" Color="#E8EAED"/>
+    <Color x:Key="SettingsSectionTitleColor">#E8EAED</Color>
     <SolidColorBrush x:Key="SettingsScrollbarThumb" Color="#8F30343A"/>
     <Color x:Key="SettingsScrollbarThumbColor">#8F30343A</Color>
 
