@@ -1,6 +1,8 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
+using System.Windows.Input;
 using GDriveTelegramSender.Services;
 using GDriveTelegramSender.Ui;
 using GDriveTelegramSender.Views;
@@ -10,7 +12,8 @@ namespace GDriveTelegramSender;
 public partial class MainWindow : Window
 {
     private readonly SendViewControl _sendView;
-    private readonly SettingsViewControl _settingsView;
+    private readonly Func<SettingsViewControl> _settingsViewFactory;
+    private SettingsViewControl? _settingsView;
     private readonly LocalizationService _localizationService;
     private readonly TelegramClientService _telegramService;
     private readonly GoogleDriveService _driveService;
@@ -21,7 +24,7 @@ public partial class MainWindow : Window
     public MainWindow(
         string? filePath,
         SendViewControl sendView,
-        SettingsViewControl settingsView,
+        Func<SettingsViewControl> settingsViewFactory,
         LocalizationService localizationService,
         TelegramClientService telegramService,
         GoogleDriveService driveService)
@@ -30,7 +33,7 @@ public partial class MainWindow : Window
 
         _initialFilePath = filePath;
         _sendView = sendView ?? throw new ArgumentNullException(nameof(sendView));
-        _settingsView = settingsView ?? throw new ArgumentNullException(nameof(settingsView));
+        _settingsViewFactory = settingsViewFactory ?? throw new ArgumentNullException(nameof(settingsViewFactory));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _telegramService = telegramService ?? throw new ArgumentNullException(nameof(telegramService));
         _driveService = driveService ?? throw new ArgumentNullException(nameof(driveService));
@@ -38,14 +41,30 @@ public partial class MainWindow : Window
         ThemeManager.Initialize(this);
 
         _sendView.Visibility = Visibility.Visible;
-        _settingsView.Visibility = Visibility.Collapsed;
         ViewsTransitionSurface.Children.Add(_sendView);
-        ViewsTransitionSurface.Children.Add(_settingsView);
 
         _localizationService.LanguageChanged += OnLanguageChanged;
 
         _sendView.RequestOpenSettings += ShowSettingsView;
         _sendView.RequestClose += Close;
+
+        Loaded += MainWindow_Loaded;
+        Closed += (_, _) =>
+        {
+            _localizationService.LanguageChanged -= OnLanguageChanged;
+            _viewTransition?.Dispose();
+            _sendView.Dispose();
+            _settingsView?.Dispose();
+        };
+    }
+
+    private SettingsViewControl EnsureSettingsView()
+    {
+        if (_settingsView != null) return _settingsView;
+
+        _settingsView = _settingsViewFactory();
+        _settingsView.Visibility = Visibility.Collapsed;
+        ViewsTransitionSurface.Children.Add(_settingsView);
 
         _settingsView.RequestReturnToSend += async () =>
         {
@@ -58,19 +77,18 @@ public partial class MainWindow : Window
             await _sendView.LoadContactsAsync();
         };
 
-        Loaded += MainWindow_Loaded;
-        Closed += (_, _) =>
-        {
-            _localizationService.LanguageChanged -= OnLanguageChanged;
-            _viewTransition?.Dispose();
-            _sendView.Dispose();
-            _settingsView.Dispose();
-        };
+        _viewTransition?.Dispose();
+        _viewTransition = new ViewTransition(ViewsTransitionSurface, [_sendView, _settingsView]);
+
+        return _settingsView;
     }
 
     private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
-        _viewTransition = new ViewTransition(ViewsTransitionSurface, [_sendView, _settingsView]);
+        _viewTransition = new ViewTransition(ViewsTransitionSurface, [_sendView]);
+
+        bool tgConfigured = _telegramService.IsConfigured && _telegramService.HasSessionFile;
+        bool gdriveConfigured = _driveService.IsConfigured;
 
         if (!string.IsNullOrEmpty(_initialFilePath) && File.Exists(_initialFilePath))
         {
@@ -78,21 +96,17 @@ public partial class MainWindow : Window
             ShowSendView();
             await _sendView.LoadContactsAsync();
         }
+        else if (!tgConfigured || !gdriveConfigured)
+        {
+            ShowSettingsView();
+        }
         else
         {
-            bool tgConfigured = _telegramService.IsConfigured && _telegramService.HasSessionFile;
-            bool gdriveConfigured = _driveService.IsConfigured;
-
-            if (!tgConfigured || !gdriveConfigured)
-            {
-                ShowSettingsView();
-            }
-            else
-            {
-                ShowSendView();
-                await _sendView.LoadContactsAsync();
-            }
+            ShowSendView();
+            await _sendView.LoadContactsAsync();
         }
+
+        _ = Dispatcher.InvokeAsync(NativeMethods.TrimWorkingSet, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
     }
 
     private void OnLanguageChanged()
@@ -116,7 +130,8 @@ public partial class MainWindow : Window
 
     private void ShowSettingsView()
     {
-        _viewTransition?.Show(_settingsView);
+        var settingsView = EnsureSettingsView();
+        _viewTransition?.Show(settingsView);
         ToggleSettingsIcon.Data = AppIcons.ArrowBackOutlined;
         ToggleSettingsText.Text = _localizationService.Get("Common_BackToSend");
     }
@@ -170,6 +185,25 @@ public partial class MainWindow : Window
                 _sendView.SetSelectedFile(files[0]);
                 ShowSendView();
             }
+        }
+    }
+
+    private const string RepositoryUrl = "https://github.com/keekyslusus/shareman";
+
+    private void Header_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = RepositoryUrl,
+                UseShellExecute = true
+            });
+            e.Handled = true;
+        }
+        catch
+        {
+            // Ignore if launching the default browser fails
         }
     }
 }

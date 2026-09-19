@@ -32,9 +32,19 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                <TextBlock Text="{ui:Loc App_Header_Title}" Style="{StaticResource PageTitle}"/>
-                <TextBlock Text="{ui:Loc App_Header_Subtitle}" Style="{StaticResource RowSubtitle}"/>
+            <StackPanel Grid.Column="0"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Left"
+                        Cursor="Hand"
+                        Background="Transparent"
+                        ToolTip="{ui:Loc App_Header_Tooltip}"
+                        MouseLeftButtonUp="Header_MouseLeftButtonUp">
+                <TextBlock Text="{ui:Loc App_Header_Title}"
+                           Style="{StaticResource PageTitle}"
+                           ToolTip="{ui:Loc App_Header_Tooltip}"/>
+                <TextBlock Text="{ui:Loc App_Header_Subtitle}"
+                           Style="{StaticResource RowSubtitle}"
+                           ToolTip="{ui:Loc App_Header_Tooltip}"/>
             </StackPanel>
 
             <Button x:Name="ToggleSettingsBtn"

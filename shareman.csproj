@@ -12,6 +12,11 @@
     <AssemblyTitle>shareman</AssemblyTitle>
     <Description>shareman</Description>
     <ApplicationIcon>Resources\shareman.ico</ApplicationIcon>
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <TieredPGO>true</TieredPGO>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+    <RetainVM>false</RetainVM>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,6 +30,11 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Resources\Localization\*.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="LICENSE" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

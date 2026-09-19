@@ -216,6 +216,7 @@ public class GoogleDriveService
         await using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
         var request = _driveService!.Files.Create(fileMetadata, stream, mimeType);
         request.Fields = "id, name, webViewLink";
+        request.ChunkSize = ResumableUpload.MinimumChunkSize * 16;
 
         var stopwatch = Stopwatch.StartNew();
         long lastBytes = 0;

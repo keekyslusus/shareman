@@ -32,7 +32,7 @@ public partial class App : Application
 
         // 5. Views & UI Components
         var sendViewControl = new SendViewControl(sendWorkflow, telegramService, settingsService, localizationService);
-        var settingsViewControl = new SettingsViewControl(
+        Func<SettingsViewControl> settingsViewFactory = () => new SettingsViewControl(
             settingsService,
             driveService,
             telegramService,
@@ -50,7 +50,7 @@ public partial class App : Application
         var mainWindow = new MainWindow(
             filePath,
             sendViewControl,
-            settingsViewControl,
+            settingsViewFactory,
             localizationService,
             telegramService,
             driveService);

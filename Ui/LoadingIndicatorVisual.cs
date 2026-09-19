@@ -82,6 +82,8 @@ public sealed class LoadingIndicatorVisual : FrameworkElement, IDisposable
 
     public void Dispose() => Stop();
 
+    private readonly Point[] _canvasPointsBuffer = new Point[PointCount - 1];
+
     protected override void OnRender(DrawingContext drawingContext)
     {
         base.OnRender(drawingContext);
@@ -96,8 +98,12 @@ public sealed class LoadingIndicatorVisual : FrameworkElement, IDisposable
         using (var context = geometry.Open())
         {
             context.BeginFigure(ToCanvas(points[0], center, scale), isFilled: true, isClosed: true);
+            for (int i = 1; i < points.Length; i++)
+            {
+                _canvasPointsBuffer[i - 1] = ToCanvas(points[i], center, scale);
+            }
             context.PolyLineTo(
-                points.Skip(1).Select(point => ToCanvas(point, center, scale)).ToArray(),
+                _canvasPointsBuffer,
                 isStroked: true,
                 isSmoothJoin: true);
         }

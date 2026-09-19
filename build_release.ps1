@@ -40,8 +40,8 @@ try {
 
     $outputDirectory = Join-Path $workspace 'bin\Release\net9.0-windows\win-x64'
 
-    Write-Host 'Running dotnet publish (Release, win-x64, single-file)...'
-    & dotnet publish (Join-Path $workspace 'shareman.csproj') -c Release -r win-x64 /p:PublishSingleFile=true --self-contained false --disable-build-servers -m:1 -o $outputDirectory
+    Write-Host 'Running dotnet publish (Release, win-x64, single-file, ReadyToRun)...'
+    & dotnet publish (Join-Path $workspace 'shareman.csproj') -c Release -r win-x64 /p:PublishSingleFile=true /p:PublishReadyToRun=true --self-contained false --disable-build-servers -m:1 -o $outputDirectory
     if ($LASTEXITCODE -ne 0) { throw "Publish of shareman failed with exit code $LASTEXITCODE." }
 
     $publishSubfolder = Join-Path $outputDirectory 'publish'
@@ -55,6 +55,14 @@ try {
     $legacyPublishExe = Join-Path $outputDirectory 'GDriveTelegramSender.exe'
     if (Test-Path -LiteralPath $legacyPublishExe) {
         Remove-Item -LiteralPath $legacyPublishExe -Force -ErrorAction SilentlyContinue
+    }
+
+    $releaseFiles = @('README.md', 'LICENSE')
+    foreach ($file in $releaseFiles) {
+        $sourcePath = Join-Path $workspace $file
+        if (Test-Path -LiteralPath $sourcePath -PathType Leaf) {
+            Copy-Item -LiteralPath $sourcePath -Destination (Join-Path $outputDirectory $file) -Force
+        }
     }
 
     $exeItem = Get-Item -LiteralPath $publishExe

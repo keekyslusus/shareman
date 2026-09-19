@@ -99,13 +99,10 @@ public partial class SendViewControl : UserControl, IDisposable
         }
 
         ShowContactsLoading(_localizationService.Get("Send_LoadingContacts"));
-        var minTimeTask = Task.Delay(400);
 
         try
         {
-            var chatsTask = _telegramService.GetChatsAndContactsAsync();
-            await Task.WhenAll(chatsTask, minTimeTask);
-            var chats = await chatsTask;
+            var chats = await _telegramService.GetChatsAndContactsAsync();
 
             _allChats.Clear();
             _allChats.AddRange(chats);

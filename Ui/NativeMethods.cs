@@ -43,6 +43,23 @@ internal static class NativeMethods
         SendMessage(hwnd, WmSetIcon, (IntPtr)1, IntPtr.Zero);
     }
 
+    [DllImport("kernel32.dll")]
+    private static extern bool SetProcessWorkingSetSize(IntPtr proc, IntPtr min, IntPtr max);
+
+    internal static void TrimWorkingSet()
+    {
+        try
+        {
+            GC.Collect(2, GCCollectionMode.Optimized, blocking: false);
+            GC.WaitForPendingFinalizers();
+            SetProcessWorkingSetSize(System.Diagnostics.Process.GetCurrentProcess().Handle, (IntPtr)(-1), (IntPtr)(-1));
+        }
+        catch
+        {
+            // Best-effort memory trimming
+        }
+    }
+
     internal static void SetWindowTheme(IntPtr hwnd, bool isLight)
     {
         if (Environment.OSVersion.Version.Major >= 10 && hwnd != IntPtr.Zero)
