@@ -65,9 +65,41 @@ try {
         }
     }
 
+    [xml]$projXml = Get-Content (Join-Path $workspace 'shareman.csproj')
+    $appVersion = $projXml.Project.PropertyGroup.Version
+    if (-not $appVersion) { $appVersion = '1.0.0' }
+
+    $stagingDir = Join-Path $outputDirectory 'staging_zip'
+    $stagingAppDir = Join-Path $stagingDir 'shareman'
+    if (Test-Path -LiteralPath $stagingDir) {
+        Remove-Item -LiteralPath $stagingDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    New-Item -ItemType Directory -Path $stagingAppDir -Force | Out-Null
+
+    Get-ChildItem -LiteralPath $outputDirectory | Where-Object {
+        $_.Name -ne 'staging_zip' -and $_.Name -ne 'UserData' -and $_.Extension -ne '.zip'
+    } | ForEach-Object {
+        Copy-Item -LiteralPath $_.FullName -Destination $stagingAppDir -Recurse -Force
+    }
+
+    $zipName = "shareman-v${appVersion}-win-x64.zip"
+    $zipPath = Join-Path $outputDirectory $zipName
+    if (Test-Path -LiteralPath $zipPath) {
+        Remove-Item -LiteralPath $zipPath -Force
+    }
+
+    Write-Host "Creating release archive ($zipName)..."
+    Compress-Archive -Path $stagingAppDir -DestinationPath $zipPath -Force
+
+    Remove-Item -LiteralPath $stagingDir -Recurse -Force -ErrorAction SilentlyContinue
+
     $exeItem = Get-Item -LiteralPath $publishExe
     $sizeMb = [Math]::Round($exeItem.Length / 1MB, 2)
     $relativePublish = Resolve-Path -Relative -LiteralPath $publishExe
+
+    $zipItem = Get-Item -LiteralPath $zipPath
+    $zipSizeMb = [Math]::Round($zipItem.Length / 1MB, 2)
+    $relativeZip = Resolve-Path -Relative -LiteralPath $zipPath
 
     Write-Host ''
     Write-Host 'Published executable: ' -NoNewline
@@ -76,6 +108,14 @@ try {
     Write-Host "${lavenderish}$sizeMb MB"
     Write-Host 'SHA256: ' -NoNewline
     Write-Host "${lavenderish}$((Get-FileHash -LiteralPath $publishExe -Algorithm SHA256).Hash)"
+
+    Write-Host ''
+    Write-Host 'Release package: ' -NoNewline
+    Write-Host "${lavenderish}$relativeZip"
+    Write-Host 'Size: ' -NoNewline
+    Write-Host "${lavenderish}$zipSizeMb MB"
+    Write-Host 'SHA256: ' -NoNewline
+    Write-Host "${lavenderish}$((Get-FileHash -LiteralPath $zipPath -Algorithm SHA256).Hash)"
 }
 catch {
     $exitCode = 1

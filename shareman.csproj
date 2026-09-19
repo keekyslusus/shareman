@@ -12,6 +12,7 @@
     <AssemblyTitle>shareman</AssemblyTitle>
     <Description>shareman</Description>
     <ApplicationIcon>Resources\shareman.ico</ApplicationIcon>
+    <Version>1.0.0</Version>
     <PublishReadyToRun>true</PublishReadyToRun>
     <TieredPGO>true</TieredPGO>
     <ServerGarbageCollection>false</ServerGarbageCollection>
